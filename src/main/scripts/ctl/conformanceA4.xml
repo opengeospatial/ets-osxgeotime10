@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ctl:test xmlns:ctl="http://www.occamlab.com/ctl"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:tns="http://www.opengis.net/cite/osxgeotime"
+  xmlns:saxon="http://saxon.sf.net/"
+  xmlns:tec="java:com.occamlab.te.TECore"
+  xmlns:trax="https://github.com/Terradue/trax"
+
+  xmlns:parsers="http://www.occamlab.com/te/parsers"
+
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+
+  xmlns:os="http://a9.com/-/spec/opensearch/1.1/"
+
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:geo="http://a9.com/-/opensearch/extensions/geo/1.0/"
+  xmlns:time="http://a9.com/-/opensearch/extensions/time/1.0/"
+  xmlns:dct="http://purl.org/dc/terms/"
+
+  name="tns:ConformanceA4">
+  <ctl:param name="os.description.url">OpenSearch Description URL</ctl:param>
+  <ctl:assertion>The test subject satisfies the Arbitrary Geometry Search conformance class. The server implements a spatial search capability using an arbitrary geometry</ctl:assertion>
+  <ctl:code>
+
+    <ctl:message>
+[LOG] <xsl:value-of select="$os.description.url"/>
+    </ctl:message>
+
+
+    <!-- Attempt to retrieve description document -->
+    <xsl:variable name="os.description.doc">
+      <ctl:request>
+        <ctl:url>
+          <xsl:value-of select="$os.description.url"/>
+        </ctl:url>
+        <ctl:method>GET</ctl:method>
+        <parsers:HTTPParser/>
+      </ctl:request>
+    </xsl:variable>
+
+    <xsl:choose>
+      <xsl:when test="not($os.description.doc/response/content/os:OpenSearchDescription/os:Url[(not(@rel) or @rel='' or @rel='results') and @type='application/atom+xml'])">
+        <ctl:message>
+[ERROR] Unable to execute (no Atom URL template). Skipping test.
+        </ctl:message>
+        <ctl:fail/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:variable name="url" select="$os.description.doc/response/content/os:OpenSearchDescription/os:Url[(not(@rel) or @rel='' or @rel='results') and @type='application/atom+xml']/@template"/>
+
+        <xsl:variable name="url-tokens">
+            <xsl:call-template name="tokenize-url-template">
+                <xsl:with-param name="string" select="$url"/>
+                <xsl:with-param name="context" select="$os.description.doc/response/content/os:OpenSearchDescription"/>
+            </xsl:call-template>
+        </xsl:variable>
+
+        <xsl:variable name="queries">
+          <query status='200' description="a valid OpenSearch request with LineString Geometry">
+            <token type="geo:geometry">LINESTRING (-180 -90, 180 90)</token>
+            <token type="os:count">1</token>
+          </query>
+          <query status='200' description="a valid OpenSearch request with Polygon Geometry">
+            <token type="geo:geometry">POLYGON((-180 -90,-180 90,180 90,180 -90,-180 -90))</token>
+            <token type="os:count">1</token>
+          </query>
+          <query status='200' description="a valid OpenSearch request with MultiPoint Geometry">
+            <token type="geo:geometry">MULTIPOINT ((-180 -90), (0 0), (180 90))</token>
+            <token type="os:count">1</token>
+          </query>
+          <query status='200' description="a valid OpenSearch request with MultiLineString Geometry">
+            <token type="geo:geometry">MULTILINESTRING( (-180 90, 180 -90),(-180 -90, 180 90))</token>
+            <token type="os:count">1</token>
+          </query>
+          <query status='200' description="a valid OpenSearch request with MultiPolygon Geometry">
+            <token type="geo:geometry">MULTIPOLYGON ( ((-180 -90,-180 90,0 90,0 -90,-180 -90)), ((0 -90,0 90,180 90,180 -90,0 -90)) )</token>
+            <token type="os:count">1</token>
+          </query>
+        </xsl:variable>
+
+        <xsl:for-each select="$queries/query">
+          <ctl:call-test name="tns:os-request">
+            <ctl:with-param name="url-tokens">
+              <value><xsl:copy-of select="$url-tokens"/></value>
+            </ctl:with-param>
+            <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
+            <ctl:with-param name="expected.status" select="@status"/>
+            <ctl:with-param name="expected.empty" select="@empty='true'"/>
+            <ctl:with-param name="description" select="@description"/>
+          </ctl:call-test>
+        </xsl:for-each>
+      </xsl:otherwise>
+    </xsl:choose>
+  </ctl:code>
+</ctl:test>

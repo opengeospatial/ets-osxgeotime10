@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" 
+xmlns:eo="http://a9.com/-/opensearch/extensions/eo/1.0/"
+xmlns:param="http://a9.com/-/opensearch/extensions/param/1.0/"
+xmlns:time="http://a9.com/-/opensearch/extensions/time/1.0/"
+xmlns:geo="http://a9.com/-/opensearch/extensions/geo/1.0/">
+ 
+<ShortName>Web Search</ShortName> 
+<LongName>Example.com Web Search</LongName> 
+<Description>Use Example.com to search the Web.</Description> 
+<Tags>example web</Tags> 
+<Contact>admin@example.com</Contact> 
+<Url type="application/atom+xml" 
+     template="http://example.com/myatom/?pw={startPage?}&amp;acq={eo:acquisitionStation?}&amp;start={time:start?}&amp;end={time:end?}"> 
+
+	<param:Parameter name="start" value="{time:start}" minimum="0" 
+	   minInclusive="2011-01-01T00:00:00Z" maxExclusive="2012-01-01T00:00:00Z"/>
+	
+	<param:Parameter name="end" value="{time:end}" minimum="0"
+	   minInclusive="2011-01-01T00:00:00Z" maxExclusive="2012-01-01T00:00:00Z"/>
+	
+	<param:Parameter name="acq" value="eo:acquisitionStation" minimum="0" 
+	   title="Acquisiton Station">
+	     <param:Option value="PDHS-K" label="Kiruna"/>
+	     <param:Option value="PDHS-E" label="ESRIN" />
+	</param:Parameter>
+</Url>
+<Attribution>Copyright 2005, Example.com, Inc.</Attribution>
+<SyndicationRight>open</SyndicationRight> 
+
+</OpenSearchDescription>

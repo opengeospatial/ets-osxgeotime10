@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ctl:package xmlns:ctl="http://www.occamlab.com/ctl"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:tns="http://www.opengis.net/cite/osxgeotime"
+  xmlns:saxon="http://saxon.sf.net/"
+  xmlns:tec="java:com.occamlab.te.TECore"
+  xmlns:trax="https://github.com/Terradue/trax"
+  xmlns:parsers="http://www.occamlab.com/te/parsers"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xmlns:os="http://a9.com/-/spec/opensearch/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:geo="http://a9.com/-/opensearch/extensions/geo/1.0/"
+  xmlns:time="http://a9.com/-/opensearch/extensions/time/1.0/"
+  xmlns:dct="http://purl.org/dc/terms/">
+
+  <ctl:function name="tns:run-ets-osxgeotime"
+    xmlns:ctl="http://www.occamlab.com/ctl"
+    xmlns:tns="http://www.opengis.net/cite/osxgeotime"
+    >
+    <ctl:param name="testRunArgs">A Document node containing test run arguments (as XML properties).</ctl:param>
+    <ctl:return>The test results as a Source object (root node).</ctl:return>
+    <ctl:description>Runs the osxgeotime ${version} test suite.</ctl:description>
+    <ctl:java class="org.opengis.cite.osxgeotime.TestNGController"
+                  method="doTestRun"
+                  initialized="true">
+      <ctl:with-param name="outputDirPath" select="system-property('java.io.tmpdir')" />
+    </ctl:java>
+  </ctl:function>
+
+
+  <ctl:suite name="tns:ets-osxgeotime-${version}">
+    <ctl:title>OpenSearch Geo and Time Extensions Conformance Test Suite</ctl:title>
+    <ctl:description>Checks OGC 10-032 for more information about the conformance classes.</ctl:description>
+    <ctl:starting-test>tns:Main</ctl:starting-test>
+  </ctl:suite>
+
+  <ctl:test name="tns:validate-file">
+    <ctl:param name="description"/>
+    <ctl:param name="url"/>
+    <ctl:param name="rnc"/>
+    <ctl:assertion>Validate file as a valid RNC: {$rnc}</ctl:assertion>
+    <ctl:code>
+      <ctl:message>[LOG] <xsl:value-of select="$url"/></ctl:message>
+      <!-- check first if file is available -->
+      <xsl:variable name="os.doc">
+        <ctl:request>
+          <ctl:url>
+            <xsl:value-of select="$url"/>
+          </ctl:url>
+          <ctl:method>GET</ctl:method>
+          <parsers:HTTPParser/>
+        </ctl:request>
+      </xsl:variable>
+      <xsl:choose>
+        <xsl:when test="$os.doc/response/status/@code ='200' or $os.doc/response/status/@code =''">
+          <xsl:variable name="test-run-props">
+            <properties version="1.0">
+              <entry key="iut"><xsl:value-of select="$url"/></entry>
+              <entry key="rnc"><xsl:value-of select="$rnc"/></entry>
+            </properties>
+          </xsl:variable>
+          <xsl:variable name="test-results">
+            <ctl:call-function name="tns:run-ets-osxgeotime">
+              <ctl:with-param name="testRunArgs" select="$test-run-props"/>
+            </ctl:call-function>
+          </xsl:variable>
+          <xsl:variable name="testRunDir">
+            <xsl:value-of select="tec:getTestRunDirectory($te:core)"/>
+          </xsl:variable>
+          <xsl:call-template name="tns:testng-report">
+            <xsl:with-param name="results" select="$test-results" />
+            <xsl:with-param name="outputDir" select="$testRunDir" />
+          </xsl:call-template>
+          <xsl:variable name="total-failed">
+            <xsl:value-of select="$test-results/testng-results/@failed"/>
+          </xsl:variable>
+          <xsl:choose>
+            <xsl:when test="xs:integer($total-failed) gt 0">
+              <xsl:for-each select="$test-results//test-method[@status='FAIL' and not(@is-config='true')]">
+                <xsl:for-each select="tokenize(substring-before(normalize-space(.//message),'/org/opengis/'),'Severity:')">
+                  <ctl:message>[ERROR] <xsl:value-of select="."/>
+                  </ctl:message>
+                </xsl:for-each>
+              </xsl:for-each>
+              <ctl:fail/>
+            </xsl:when>
+            <xsl:otherwise/>
+          </xsl:choose>
+        </xsl:when>
+        <xsl:otherwise>
+          <ctl:message>[ERROR] Server reported a <xsl:value-of select="$os.doc/response/status/@code"/> response code (<xsl:value-of select="$os.doc/response/status"/>) while a 200 was expected skipping test</ctl:message>
+          <ctl:fail/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </ctl:code>
+  </ctl:test>
+
+
+  <ctl:test name="tns:request-status">
+    <ctl:param name="request.url"/>
+    <ctl:param name="request.doc"/>
+    <ctl:param name="expect.code"/>
+    <ctl:assertion>The request returns the expected HTTP status ({$expect.code})</ctl:assertion>
+    <ctl:code>
+      <xsl:choose>
+        <xsl:when test="$request.doc/status/@code != $expect.code">
+          <ctl:message>[LOG] <xsl:value-of select="$request.url"/>
+            [ERROR] Server reported a <xsl:value-of select="$request.doc/status/@code"/> response code (<xsl:value-of select="$request.doc/status"/>) while a <xsl:value-of select="$expect.code"/> was expected</ctl:message>
+          <ctl:fail/>
+        </xsl:when>
+        <xsl:otherwise/>
+      </xsl:choose>
+
+    </ctl:code>
+  </ctl:test>
+
+
+  <ctl:test name="tns:request-mime">
+    <ctl:param name="request.url"/>
+    <ctl:param name="request.doc"/>
+    <ctl:param name="expect.header"/>
+    <ctl:param name="description"/>
+    <ctl:assertion>The requested {$description} has the expected MIME-type ({$expect.header})  </ctl:assertion>
+    <ctl:code>
+      <xsl:choose>
+        <xsl:when test="not(starts-with($request.doc/headers/header[lower-case(@name) = 'content-type'],$expect.header))">
+          <ctl:message>[ERROR] The expected content-type is '<xsl:value-of select="$expect.header"/>' but found '<xsl:value-of select="$request.doc/headers/header[lower-case(@name) = 'content-type']"/>' instead</ctl:message>
+          <ctl:fail/>
+        </xsl:when>
+        <xsl:otherwise/>
+      </xsl:choose>
+    </ctl:code>
+  </ctl:test>
+
+  <ctl:test name="tns:accepts-token">
+    <ctl:param name="url-tokens"/>
+    <ctl:param name="parameter"/>
+    <ctl:assertion>Test subject accepts {$parameter}</ctl:assertion>
+    <ctl:code>
+        <xsl:if test="not($url-tokens/token[$parameter=@type])">
+          <ctl:message>[ERROR] Test Subject does not accept parameter requested (<xsl:value-of select="$parameter"/>) </ctl:message>
+          <ctl:fail/>
+        </xsl:if>
+    </ctl:code>
+  </ctl:test>
+
+  <ctl:test name="tns:elements-count">
+    <ctl:param name="xpath"/>
+    <ctl:param name="count"/>
+    <ctl:param name="description"/>
+    <ctl:assertion>Expect {$count} result(s) of {$description}</ctl:assertion>
+    <ctl:code>
+      <xsl:variable name="cc" select="count($xpath)"/>
+      <xsl:if test="$cc != $count">
+        <ctl:message>[ERROR] Expected <xsl:value-of select="$count"/> element(s) of <xsl:value-of select="$description"/> but found <xsl:value-of select="$cc"/>
+        </ctl:message>
+        <ctl:fail/>
+      </xsl:if>
+    </ctl:code>
+  </ctl:test>
+
+
+  <ctl:test name="tns:validate-query-element">
+    <ctl:param name="query"/>
+    <ctl:param name="doc"/>
+    <ctl:assertion>Test Atom response for the request os:Query elements</ctl:assertion>
+    <ctl:code>
+      <xsl:for-each select="$query/token">
+        <ctl:call-test name="tns:elements-count">
+          <ctl:with-param name="xpath" select="$doc/response/content/atom:feed/os:Query/@*[name=current()/@type]"/>
+          <ctl:with-param name="count" select="1"/>
+          <ctl:with-param name="description" select="concat('atom:feed/osQuery/@',@type)"/>
+        </ctl:call-test>
+      </xsl:for-each>
+    </ctl:code>
+  </ctl:test>
+
+  <ctl:test name="tns:os-request">
+    <ctl:param name="url-tokens"/>
+    <ctl:param name="query"/>
+    <ctl:param name="expected.status"/>
+    <ctl:param name="expected.mime"/>
+    <ctl:param name="expected.empty"/>
+    <ctl:param name="description"/>
+    <ctl:assertion>Test subject executes {$description} </ctl:assertion>
+    <ctl:code>
+      <xsl:for-each select="$query/token">
+        <ctl:call-test name="tns:accepts-token">
+          <ctl:with-param name="url-tokens">
+            <xsl:copy-of select="$url-tokens"/>
+          </ctl:with-param>
+          <ctl:with-param name="parameter"><xsl:value-of select="@type"/></ctl:with-param>
+        </ctl:call-test>
+      </xsl:for-each>
+      <xsl:variable name="os.url">
+        <xsl:call-template name="instantiate-url-template">
+          <xsl:with-param name="tokens" select="$url-tokens"/>
+          <xsl:with-param name="request" select="$query"/>
+        </xsl:call-template>
+      </xsl:variable>
+      <xsl:variable name="os.doc">
+        <ctl:request>
+          <ctl:url>
+            <xsl:value-of select="$os.url"/>
+          </ctl:url>
+          <ctl:method>GET</ctl:method>
+          <parsers:HTTPParser/>
+        </ctl:request>
+      </xsl:variable>
+      <ctl:call-test name="tns:request-status">
+        <ctl:with-param name="request.url" select="$os.url"/>
+        <ctl:with-param name="request.doc" select="$os.doc"/>
+        <ctl:with-param name="expect.code" select="$expected.status"/>
+      </ctl:call-test>
+      <xsl:if test="$expected.status='200'">
+        <ctl:call-test name="tns:request-mime">
+          <ctl:with-param name="request.doc" select="$os.doc"/>
+          <ctl:with-param name="expect.header" select="'application/atom+xml'"/>
+          <ctl:with-param name="description" select="'Atom Feed'"/>
+        </ctl:call-test>
+        <ctl:call-test name="tns:elements-count">
+          <ctl:with-param name="xpath" select="$os.doc/response/content/atom:feed"/>
+          <ctl:with-param name="count" select="1"/>
+          <ctl:with-param name="description" select="'Atom Feed'"/>
+        </ctl:call-test>
+        <xsl:variable name="must.have.items">
+          <xsl:choose>
+            <xsl:when test="expected.empty">0</xsl:when>
+            <xsl:when test="$query/token[@type='os:count']"><xsl:value-of select="$query/token[@type='os:count']"/></xsl:when>
+            <xsl:otherwise/>
+          </xsl:choose>
+        </xsl:variable>
+        <xsl:if test="$must.have.items">
+          <ctl:call-test name="tns:elements-count">
+            <ctl:with-param name="xpath" select="$os.doc/response/content/atom:feed/atom:entry"/>
+            <ctl:with-param name="count" select="$must.have.items"/>
+            <ctl:with-param name="description" select="'Atom entries'"/>
+          </ctl:call-test>
+        </xsl:if>
+        <ctl:call-test name="tns:validate-file">
+          <ctl:with-param name="description" select="'Atom Feed Document'"/>
+          <ctl:with-param name="url" select="$os.url"/>
+          <ctl:with-param name="rnc" select="'/org/opengis/cite/osxgeotime/schemas/atomgeo.rnc'"/>
+        </ctl:call-test>
+        <ctl:call-test name="tns:validate-query-element">
+          <ctl:with-param name="doc" select="$os.doc"/>
+          <ctl:with-param name="query" select="$query"/>
+        </ctl:call-test>
+      </xsl:if>
+    </ctl:code>
+  </ctl:test>
+
+
+  <ctl:test name="tns:BBox-Request-Valid">
+    <ctl:param name="os.description.url" />
+    <ctl:param name="os.description.doc" />
+    <ctl:assertion>Test subject obtains a valid Atom feed when executing a bbox request</ctl:assertion>
+    <ctl:code>
+      <xsl:choose>
+        <xsl:when test="not($os.description.doc/content/os:OpenSearchDescription/os:Url[(not(@rel) or @rel='' or @rel='results') and @type='application/atom+xml'])">
+          <ctl:message>
+  [ERROR] Unable to execute (no Atom URL template). Skipping test.
+          </ctl:message>
+          <ctl:fail/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:variable name="url" select="$os.description.doc/content/os:OpenSearchDescription/os:Url[(not(@rel) or @rel='' or @rel='results') and @type='application/atom+xml']/@template"/>
+
+          <xsl:variable name="url-tokens">
+              <xsl:call-template name="tokenize-url-template">
+                  <xsl:with-param name="string" select="$url"/>
+                  <xsl:with-param name="context" select="$os.description.doc/content/os:OpenSearchDescription"/>
+              </xsl:call-template>
+          </xsl:variable>
+
+          <xsl:variable name="queries">
+            <query status='200' description="a valid OpenSearch request">
+              <token type="geo:box">-180,-90,180,90</token>
+              <token type="os:count">1</token>
+            </query>
+            <query status='400' description="an invalid OpenSearch request">
+              <token type="geo:box" >-18sd0,-90,180,90</token>
+              <token type="os:count">1</token>
+            </query>
+            <query empty='true' status='200' description="a valid OpenSearch request that returns emtpy">
+              <token type="geo:box">0,0,0,0</token>
+              <token type="os:count">1</token>
+            </query>
+          </xsl:variable>
+          <xsl:for-each select="$queries/query">
+            <ctl:call-test name="tns:os-request">
+              <ctl:with-param name="url-tokens">
+                <value><xsl:copy-of select="$url-tokens"/></value>
+              </ctl:with-param>
+              <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
+              <ctl:with-param name="expected.status" select="@status"/>
+              <ctl:with-param name="expected.empty" select="@empty='true'"/>
+              <ctl:with-param name="description" select="@description"/>
+            </ctl:call-test>
+          </xsl:for-each>
+        </xsl:otherwise>
+      </xsl:choose>
+    </ctl:code>
+  </ctl:test>
+
+  <ctl:test name="tns:OpenSearch-Description-Atom">
+    <ctl:param name="os.description.url"/>
+    <ctl:param name="os.description.doc"/>
+    <ctl:assertion>Test subject contains a URL template with Atom encoding</ctl:assertion>
+    <ctl:code>
+      <xsl:if test="not($os.description.doc/content/os:OpenSearchDescription/os:Url[(not(@rel) or @rel='' or @rel='results') and @type='application/atom+xml'])">
+        <ctl:message>
+  [ERROR] An OpenSearch Description Document must have a Url template with type of ATOM document.
+        </ctl:message>
+        <ctl:fail/>
+      </xsl:if>
+    </ctl:code>
+  </ctl:test>
+
+  <ctl:test name="tns:OpenSearch-Description-Valid">
+    <ctl:param name="os.description.url"/>
+    <ctl:param name="os.description.doc"/>
+    <ctl:assertion>Test subject is a valid OpenSearch Description Document</ctl:assertion>
+    <ctl:code>
+      <ctl:call-test name="tns:request-status">
+        <ctl:with-param name="request.url" select="$os.description.url"/>
+        <ctl:with-param name="request.doc" select="$os.description.doc"/>
+        <ctl:with-param name="expect.code" select="'200'"/>
+      </ctl:call-test>
+      <ctl:call-test name="tns:request-mime">
+        <ctl:with-param name="request.url" select="$os.description.url"/>
+        <ctl:with-param name="request.doc" select="$os.description.doc"/>
+        <ctl:with-param name="expect.header" select="'application/opensearchdescription+xml'"/>
+        <ctl:with-param name="description" select="'OpenSearch Description Document'"/>
+      </ctl:call-test>
+      <ctl:call-test name="tns:validate-file">
+        <ctl:with-param name="description" select="'OpenSearch Description Document'"/>
+        <ctl:with-param name="url" select="$os.description.url"/>
+        <ctl:with-param name="rnc" select="'/org/opengis/cite/osxgeotime/schemas/osdd.rnc'"/>
+      </ctl:call-test>
+    </ctl:code>
+  </ctl:test>
+
+
+  <ctl:test name="tns:Core">
+    <ctl:param name="os.description.url"/>
+    <ctl:assertion>The test subject satisfies the core conformance class.</ctl:assertion>
+
+    <ctl:code>
+      <ctl:message>[LOG] <xsl:value-of select="$os.description.url"/></ctl:message>
+      <!-- Attempt to retrieve description document -->
+      <xsl:variable name="os.description.doc">
+        <ctl:request>
+          <ctl:url>
+            <xsl:value-of select="$os.description.url"/>
+          </ctl:url>
+          <ctl:method>GET</ctl:method>
+          <parsers:HTTPParser/>
+        </ctl:request>
+      </xsl:variable>
+      <ctl:call-test name="tns:OpenSearch-Description-Valid">
+        <ctl:with-param name="os.description.url"><xsl:value-of select="$os.description.url"/></ctl:with-param>
+        <ctl:with-param name="os.description.doc" select="$os.description.doc"/>
+      </ctl:call-test>
+      <ctl:call-test name="tns:OpenSearch-Description-Atom">
+        <ctl:with-param name="os.description.url" select="$os.description.url"/>
+        <ctl:with-param name="os.description.doc" select="$os.description.doc"/>
+      </ctl:call-test>
+      <ctl:call-test name="tns:BBox-Request-Valid">
+        <ctl:with-param name="os.description.url" select="$os.description.url"/>
+        <ctl:with-param name="os.description.doc" select="$os.description.doc"/>
+      </ctl:call-test>
+    </ctl:code>
+  </ctl:test>
+
+  <ctl:test name="tns:Main">
+    <ctl:assertion>The test subject satisfies the core conformance class.</ctl:assertion>
+    <ctl:code>
+      <xsl:variable name="form-data">
+        <ctl:form method="POST" width="800" height="600">
+=====================
+<h2>OpenSearch Geo and Time Extensions Conformance Conformance Test Suite</h2>
+<div class="scope" style="background:#F0F8FF" bgcolor="#F0F8FF">
+  <p>The test subject is checked against the following specifications:</p>
+  <ul>
+    <li> OpenSearch Geo and Time Extensions (OGC 10-032)</li>
+    <li> The Atom Syndication Format (RFC-4287)</li>
+  </ul>
+  <p>The following conformance classes are defined:</p>
+  <ul>
+    <li><b>Core (GeoSpatial Service)</b>
+      <ul>
+        <li> The server generates a valid OpenSearch description document.</li>
+        <li> The server defines an URL template for the Atom response type. </li>
+        <li> The server implements a bounding box search. </li>
+      </ul>
+    </li>
+    <li> <b>Arbitrary Geometry Search</b> : The server implements a spatial search
+    capability using an arbitrary geometry.</li>
+  <li> <b>Point and Radius Search</b> : The server implements a spatial search
+  using a point and a radius.</li>
+  <li> <b>Minimum spatial operator</b> : The server implements the "intersects"
+  spatial operator.</li>
+  <li> <b>Spatial operators</b> : The server implements the spatial operators
+  "contains" and "disjoint".</li>
+  <li> <b>Get record by id</b> : The server can retrieve a record form its
+  repository using the id of the record.</li>
+  <li> <b>Search by name</b> : The server implements a spatial search using the
+   name or address of a location.</li>
+  <li> <b>Temporal search core</b> : The server implements a temporal search capability.</li>
+  <li> <b>Temporal search relation</b> : The server implements a temporal search capability
+  able to define temporal relations</li>
+  </ul>
+</div>
+
+<fieldset style="background:#ccffff">
+  <legend style="font-family: sans-serif; color: #000099;
+       background-color:#F0F8FF; border-style: solid;
+       border-width: medium; padding:4px">Implementation under test</legend>
+  <p>
+    <label class="form-label" for="uri">
+      <h4 style="margin-bottom: 0.5em">Location of OpenSearch Description document
+        (absolute http: or file: URI)</h4>
+    </label>
+    <input id="uri" name="uri" size="96" type="text" value="" />
+  </p>
+</fieldset>
+<p>
+  <input class="form-button" type="submit" value="Start"/>
+  <input class="form-button" type="reset" value="Clear"/>
+</p>
+=====================
+        </ctl:form>
+      </xsl:variable>
+
+      <!-- Populate global variables from form data -->
+      <xsl:variable name="os.description.url"
+                      select="$form-data/values/value[@key='uri']"/>
+      <ctl:call-test name="tns:Core">
+        <ctl:with-param name="os.description.url" select="$os.description.url"/>
+      </ctl:call-test>
+      <ctl:call-test name="tns:ConformanceA4">
+        <ctl:with-param name="os.description.url" select="$os.description.url"/>
+      </ctl:call-test>
+      <ctl:call-test name="tns:ConformanceA5">
+        <ctl:with-param name="os.description.url" select="$os.description.url"/>
+      </ctl:call-test>
+      <ctl:call-test name="tns:ConformanceA6">
+        <ctl:with-param name="os.description.url" select="$os.description.url"/>
+      </ctl:call-test>
+      <ctl:call-test name="tns:ConformanceA7">
+        <ctl:with-param name="os.description.url" select="$os.description.url"/>
+      </ctl:call-test>
+      <ctl:call-test name="tns:ConformanceA8">
+        <ctl:with-param name="os.description.url" select="$os.description.url"/>
+      </ctl:call-test>
+      <ctl:call-test name="tns:ConformanceA9">
+        <ctl:with-param name="os.description.url" select="$os.description.url"/>
+      </ctl:call-test>
+      <ctl:call-test name="tns:ConformanceA10">
+        <ctl:with-param name="os.description.url" select="$os.description.url"/>
+      </ctl:call-test>
+      <ctl:call-test name="tns:ConformanceA11">
+        <ctl:with-param name="os.description.url" select="$os.description.url"/>
+      </ctl:call-test>
+    </ctl:code>
+  </ctl:test>
+
+  <xi:include href="conformanceA4.xml"/>
+  <xi:include href="conformanceA5.xml"/>
+  <xi:include href="conformanceA6.xml"/>
+  <xi:include href="conformanceA7.xml"/>
+  <xi:include href="conformanceA8.xml"/>
+  <xi:include href="conformanceA9.xml"/>
+  <xi:include href="conformanceA10.xml"/>
+  <xi:include href="conformanceA11.xml"/>
+
+  <xsl:template name="tns:testng-report">
+    <xsl:param name="results" />
+    <xsl:param name="outputDir" />
+    <xsl:variable name="stylesheet" select="tec:findXMLResource($te:core, '/testng-report.xsl')" />
+    <xsl:variable name="reporter" select="saxon:compile-stylesheet($stylesheet)" />
+    <xsl:variable name="report-params" as="node()*">
+      <xsl:element name="testNgXslt.outputDir">
+      <xsl:value-of select="concat($outputDir, '/html')" />
+      </xsl:element>
+    </xsl:variable>
+    <xsl:copy-of select="saxon:transform($reporter, $results, $report-params)" />
+  </xsl:template>
+
+  <xi:include href="templates.xsl"/>
+
+</ctl:package>

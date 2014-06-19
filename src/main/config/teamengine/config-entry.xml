@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Unpack *-ctl-scripts.zip assembly in the TE_BASE/scripts directory -->
+<!-- Add this entry to TE_BASE/config.xml (//organization/standard) -->
+<organization>
+  <name>OGC</name>
+  <standard>
+    <name>OpenSearch Geo and Time Extensions</name>
+    <version>
+      <name>1.0 (pending)</name>
+      <suite>
+        <namespace-uri>http://www.opengis.net/cite/osxgeotime</namespace-uri>
+        <prefix>tns</prefix>
+        <local-name>ets-osxgeotime-${version}</local-name>
+        <title>OpenSearch Geo and Time Extensions 1.0 Conformance Test Suite</title>
+        <description>Checks OpenSearch Geo and Time Extensions document for conformance to OGC 10-032.</description>
+      </suite>
+      <revision>
+        <name>${version}</name>
+        <status>Alpha</status>
+        <sources>
+          <source>osxgeotime/${version}/osxgeotime-suite.xml</source>
+        </sources>
+        <webdir>osxgeotime/${version}/web</webdir>
+      </revision>
+    </version>
+  </standard>
+</organization>

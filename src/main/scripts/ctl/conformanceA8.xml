@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ctl:test xmlns:ctl="http://www.occamlab.com/ctl"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:tns="http://www.opengis.net/cite/osxgeotime"
+  xmlns:saxon="http://saxon.sf.net/"
+  xmlns:tec="java:com.occamlab.te.TECore"
+  xmlns:trax="https://github.com/Terradue/trax"
+
+  xmlns:parsers="http://www.occamlab.com/te/parsers"
+
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+
+  xmlns:os="http://a9.com/-/spec/opensearch/1.1/"
+
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:geo="http://a9.com/-/opensearch/extensions/geo/1.0/"
+  xmlns:time="http://a9.com/-/opensearch/extensions/time/1.0/"
+  xmlns:dct="http://purl.org/dc/terms/"
+
+ name="tns:ConformanceA8">
+ <ctl:param name="os.description.url">OpenSearch Description URL</ctl:param>
+
+  <ctl:param name="url">Search request URL template to execute</ctl:param>
+  <ctl:assertion>The test subject satisfies the Record By ID conformance class. The server implements a spatial search capability using an identifier</ctl:assertion>
+  <ctl:code>
+    <ctl:message>
+    [LOG] <xsl:value-of select="$os.description.url"/>
+    </ctl:message>
+
+    <!-- Attempt to retrieve description document -->
+    <xsl:variable name="os.description.doc">
+      <ctl:request>
+        <ctl:url>
+          <xsl:value-of select="$os.description.url"/>
+        </ctl:url>
+        <ctl:method>GET</ctl:method>
+        <parsers:HTTPParser/>
+      </ctl:request>
+    </xsl:variable>
+
+    <xsl:choose>
+      <xsl:when test="not($os.description.doc/response/content/os:OpenSearchDescription/os:Url[(not(@rel) or @rel='' or @rel='results') and @type='application/atom+xml'])">
+        <ctl:message>
+    [ERROR] Unable to execute (no Atom URL template). Skipping test.
+        </ctl:message>
+        <ctl:fail/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:variable name="url" select="$os.description.doc/response/content/os:OpenSearchDescription/os:Url[(not(@rel) or @rel='' or @rel='results') and @type='application/atom+xml']/@template"/>
+
+        <xsl:variable name="url-tokens">
+            <xsl:call-template name="tokenize-url-template">
+                <xsl:with-param name="string" select="$url"/>
+                <xsl:with-param name="context" select="$os.description.doc/response/content/os:OpenSearchDescription"/>
+            </xsl:call-template>
+        </xsl:variable>
+        <!-- Get one ID from First ID -->
+
+        <xsl:variable name="os.doc">
+          <ctl:request>
+            <ctl:url>
+              <xsl:call-template name="instantiate-url-template">
+                <xsl:with-param name="tokens" select="$url-tokens"/>
+                <xsl:with-param name="request">
+                    <value>
+                      <query status='200' type="a valid OpenSearch request covering the entire globe">
+                        <token type="geo:box">-180,-90,180,90</token>
+                        <token type="os:count">1</token>
+                      </query>
+                    </value>
+                </xsl:with-param>
+              </xsl:call-template>
+            </ctl:url>
+            <ctl:method>GET</ctl:method>
+            <parsers:HTTPParser/>
+          </ctl:request>
+        </xsl:variable>
+
+
+        <ctl:call-test name="tns:elements-count">
+          <ctl:with-param name="xpath" select="$os.doc/response/content/atom:feed/atom:entry[1]/dc:identifier"/>
+          <ctl:with-param name="count" select="1"/>
+          <ctl:with-param name="description" select="'Atom entries'"/>
+        </ctl:call-test>
+
+        <xsl:variable name="node1" select="$os.doc/result/content[1]/atom:feed/atom:entry[1]"/>
+        <xsl:variable name="MyID" select="$node1/dc:identifier"/>
+        <xsl:choose>
+          <xsl:when test="concat('',$MyID)=''">
+            <ctl:message>[ERROR] The dc:identifier of the entry is empty skipping other tests
+            </ctl:message>
+            <ctl:fail/>
+          </xsl:when>
+          <xsl:otherwise>
+
+            <xsl:variable name="queries">
+              <query status='200' type="a valid OpenSearch request covering the entire globe">
+                <token type="geo:uid"><xsl:value-of select="$MyID"/></token>
+                <token type="os:count">1</token>
+              </query>
+              <query status='200' empty="true" type="a valid OpenSearch request with a non-existant ID (expects empty response)">
+                <token type="geo:uid" returns="empty">hoc_autem_non_est_verum</token>
+                <token type="os:count">1</token>
+              </query>
+            </xsl:variable>
+
+            <xsl:variable name="all-results">
+              <result>
+              <xsl:for-each select="$queries/query">
+                <xsl:variable name="atom-url">
+                  <xsl:call-template name="instantiate-url-template">
+                      <xsl:with-param name="tokens" select="$url-tokens"/>
+                      <xsl:with-param name="request">
+                        <xsl:copy-of select="./*"/>
+                      </xsl:with-param>
+                  </xsl:call-template>
+                </xsl:variable>
+                <!-- Attempt to retrieve Atom document -->
+                <xsl:variable name="atom.doc">
+                  <ctl:request>
+                    <ctl:url>
+                      <xsl:value-of select="$atom-url"/>
+                    </ctl:url>
+                    <ctl:method>GET</ctl:method>
+                    <parsers:HTTPParser/>
+                  </ctl:request>
+                </xsl:variable>
+                <xsl:choose>
+                  <xsl:when test="$atom.doc/response/status/@code != '200'">
+                    <test-failure>Server reported a <xsl:value-of select="$atom.doc/response/status/@code"/> response code (<xsl:value-of select="$atom.doc/response/status"/>)</test-failure>
+                  </xsl:when>
+                  <xsl:when test="not($atom.doc/response/content/atom:feed)">
+                    <test-failure>URL did not obtain an Atom document!</test-failure>
+                  </xsl:when>
+                  <xsl:otherwise>
+                    <content><xsl:copy-of select="$atom.doc/response/content/atom:feed"/></content>
+                  </xsl:otherwise>
+                </xsl:choose>
+              </xsl:for-each>
+            </result>
+            </xsl:variable>
+            <xsl:variable name="node2" select="$all-results/result/content[1]/atom:feed/atom:entry[1]"/>
+
+            <xsl:choose>
+              <xsl:when test="count($all-results/result/content[*])!=count($queries/*)">
+                <ctl:call-function name="tns:write-test-messages">
+                  <ctl:with-param name="messages" select="$all-results"/>
+                </ctl:call-function>
+                <ctl:message>[ERROR] Unable to perform requests. The server does not conforms to ID query class.
+                </ctl:message>
+                <ctl:fail/>
+              </xsl:when>
+              <xsl:when test="$node2/dc:identifier != $MyID">
+                <ctl:call-function name="tns:write-test-messages">
+                  <ctl:with-param name="messages" select="$all-results"/>
+                </ctl:call-function>
+                <ctl:message>[ERROR] The entry returned by ID query is not the same requested.
+                </ctl:message>
+                <ctl:fail/>
+              </xsl:when>
+              <xsl:when test="count($node1 | $node2) != count($node1) or count($node1 | $node2) != count($node2)">
+                <ctl:call-function name="tns:write-test-messages">
+                  <ctl:with-param name="messages" select="$all-results"/>
+                </ctl:call-function>
+                <ctl:message>[ERROR] The entry returned by ID query does not returns the same number of elements
+                </ctl:message>
+                <ctl:fail/>
+              </xsl:when>
+              <xsl:when test="deep-equal($node1, $node2)">
+                <ctl:call-function name="tns:write-test-messages">
+                  <ctl:with-param name="messages" select="$all-results"/>
+                </ctl:call-function>
+                <ctl:message>[ERROR] The entry returned by ID query does not returns the same content
+                </ctl:message>
+                <ctl:fail/>
+              </xsl:when>
+
+              <xsl:otherwise>
+                <ctl:message>[SUCCESS] Test subject supports Get Record By ID Conformance class
+                </ctl:message>
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:otherwise>
+        </xsl:choose>
+
+      </xsl:otherwise>
+    </xsl:choose>
+  </ctl:code>
+</ctl:test>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+  <head>
+    <title>OpenSearch Geo and Time Extensions Conformance Test Suite</title>
+    <meta charset="UTF-8" />
+    <style type="text/css">
+body {
+	color: black;
+	background: white;
+	font-family: Georgia, serif;
+}
+
+h1,h2,h3 {
+	font-family: Verdana, sans-serif;
+	color: #000099;
+	text-align: left;
+}
+
+h1 {
+	font-size: 1.4em;
+	margin-top: 2em;
+}
+
+h2 {
+	font-size: 1.2em;
+}
+
+h3 {
+	font-size: 1em;
+	margin-bottom: 0.5em;
+}
+
+table {
+	margin-top: 0.5em;
+	margin-bottom: 1em;
+	border-collapse: collapse;
+}
+
+td,th {
+	padding: 0.25em;
+	border: 1px solid black;
+}
+
+caption,figcaption {
+	font-weight: bold;
+	text-align: left;
+	margin: 0.25em;
+}
+
+th {
+	font-weight: bold;
+	font-family: Verdana, sans-serif;
+	text-align: left;
+	vertical-align: top;
+	background: #eeeeee;
+	color: #000099;
+}
+
+dt {
+	margin-top: 0.5em;
+	font-weight: bold;
+}
+    </style>
+  </head>
+  <body>
+    <h1>OpenSearch Geo and Time Extensions Conformance Test Suite</h1>
+    <h2>Scope</h2>
+    <p>This executable test suite (ETS) verifies conformance of OpenSearch Description documents with
+    respect to the specifications:</p>
+    <ul>
+      <li style="list-style:square;"><a href="https://portal.opengeospatial.org/files/?artifact_id=56866"
+        target="_blank">OGC OpenSearch Geo and Time Extensions</a>
+      </li>
+    </ul>
+
+    <p>Several conformance classes are defined and test subject is checked against the following specifications:</p>
+      <ul>
+        <li> OpenSearch Geo and Time Extensions (OGC 10-032)</li>
+        <li> The Atom Syndication Format (RFC-4287)</li>
+      </ul>
+      <p>The following conformance classes are defined:</p>
+      <ul>
+        <li><b>Core (GeoSpatial Service)</b>
+          <ul>
+            <li> The server generates a valid OpenSearch description document.</li>
+            <li> The server defines an URL template for the Atom response type. </li>
+            <li> The server implements a bounding box search. </li>
+          </ul>
+        </li>
+        <li> <b>Arbitrary Geometry Search</b> : The server implements a spatial search
+        capability using an arbitrary geometry.</li>
+      <li> <b>Point and Radius Search</b> : The server implements a spatial search
+      using a point and a radius.</li>
+      <li> <b>Minimum spatial operator</b> : The server implements the “intersects”
+      spatial operator.</li>
+      <li> <b>Spatial operators</b> : The server implements the spatial operators
+      “contains” and “disjoint”.</li>
+      <li> <b>Get record by id</b> : The server can retrieve a record form its
+      repository using the id of the record.</li>
+      <li> <b>Search by name</b> : The server implements a spatial search using the
+       name or address of a location.</li>
+      <li> <b>Temporal search core</b> : The server implements a temporal search capability.</li>
+      <li> <b>Temporal search relation</b> : The server implements a temporal search capability
+      able to define temporal relations</li>
+      </ul>
+
+    <p>
+      See the Javadoc documentation for more detailed information about the test classes and test methods
+    that comprise the suite.</p>
+
+    <h2>How to run the tests</h2>
+    <p>The test suite may be run in any of the following environments:</p>
+    <ul>
+      <li style="list-style:square;">Integrated development environment (IDE): The main Java class
+			is <code> TestNGController</code>.
+      </li>
+      <li style="list-style:square;">REST API: Submit a request that includes the necessary
+			arguments to the <a href="../../../../rest/suites/owc/${version}/run"
+			target="_blank" type="application/xml">test run controller</a>
+      </li>
+      <li style="list-style:square;">TEAM-Engine: Run the CTL script located in the <code>/src/main/ctl/</code>
+			directory.
+      </li>
+    </ul>
+    <p>
+		The test run arguments are summarized in Table 1. The <em>Obligation</em>
+		descriptor can have the following values: M (mandatory), O (optional),
+		or C (conditional).
+    </p>
+
+    <table border="1" style="border-collapse: collapse;">
+      <caption>Table 1 - Test run arguments</caption>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Value domain</th>
+          <th>Obligation</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>iut</td>
+          <td>URI</td>
+          <td>M</td>
+          <td>A URI that refers to the OpenSearch Description document implementation
+            under test.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Release notes</h2>
+
+    <h3>1.0-r1</h3>
+    <p>Initial release (alpha)</p>
+
+  </body>
+</html>

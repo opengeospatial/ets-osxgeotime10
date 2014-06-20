@@ -12,17 +12,32 @@
   </description>
   <licenses>
     <license>
-      <name>Revised BSD (3-Clause) License</name>
-      <url>http://www.opensource.org/licenses/BSD-3-Clause</url>
+      <name>Apache License, Version 2.0</name>
+      <url>http://opensource.org/licenses/Apache-2.0</url>
     </license>
   </licenses>
 
+  <organization>
+    <name>Open Geospatial Consortium</name>
+    <url>http://www.opengeospatial.org/</url>
+  </organization>
   <scm>
-    <developerConnection>
-    scm:svn:https://svn.opengeospatial.org/ogc-projects/cite/ets/testng/ets-osxgeotime/trunk
-    </developerConnection>
+    <connection>scm:git:https://github.com/opengeospatial/ets-osxgeotime10.git</connection>
+    <developerConnection>https://github.com/opengeospatial/ets-osxgeotime10.git</developerConnection>
+    <url>https://github.com/opengeospatial/ets-osxgeotime10</url>
+    <tag>HEAD</tag>
   </scm>
-
+  <issueManagement>
+    <system>GitHub Issue Tracker</system>
+    <url>https://github.com/opengeospatial/ets-osxgeotime10/issues</url>
+  </issueManagement>
+  <developers>
+    <developer>
+      <name>Pedro Gonçalves</name>
+      <url>https://github.com/p3dr0</url>
+      <timezone>America/Rio de Janeiro</timezone>
+    </developer>
+  </developers>
   <properties>
     <ets-code>osxgeotime</ets-code>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -70,7 +70,7 @@
           <token type="os:count">1</token>
         </query>
         <query empty='true' status='200' description="a valid date/time OpenSearch using disjoint time:relation">
-          <token type="time:start" returns="empty">1900-01-01</token>
+          <token type="time:start">1900-01-01</token>
           <token type="time:end">2100-01-01</token>
           <token type="time:relation">disjoint</token>
           <token type="os:count">1</token>
@@ -83,7 +83,7 @@
             </ctl:with-param>
             <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
             <ctl:with-param name="expected.status" select="@status"/>
-            <ctl:with-param name="expected.empty" select="@empty='true'"/>
+            <ctl:with-param name="expected.empty" select="@empty"/>
             <ctl:with-param name="description" select="@description"/>
           </ctl:call-test>
         </xsl:for-each>

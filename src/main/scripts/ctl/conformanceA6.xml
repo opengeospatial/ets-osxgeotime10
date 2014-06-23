@@ -57,15 +57,12 @@
         <xsl:variable name="queries">
           <query status='200' type="a valid OpenSearch request covering the whole globe">
             <token type="geo:box">-180,-90,180,90</token>
-            <token type="os:count">1</token>
           </query>
           <query status='200' type="a valid OpenSearch request covering the east hemisphere ">
             <token type="geo:box">0,-90,180,90</token>
-            <token type="os:count">1</token>
           </query>
           <query status='200' type="a valid OpenSearch request covering the west hemisphere">
             <token type="geo:box">-180,-90,0,90</token>
-            <token type="os:count">1</token>
           </query>
           <query status='200' type="a valid OpenSearch covering a small bounding box">
             <token type="geo:box">-10,-10,10,10</token>
@@ -78,7 +75,7 @@
             </ctl:with-param>
             <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
             <ctl:with-param name="expected.status" select="@status"/>
-            <ctl:with-param name="expected.empty" select="@empty='true'"/>
+            <ctl:with-param name="expected.empty" select="@empty"/>
             <ctl:with-param name="description" select="@type"/>
 
           </ctl:call-test>

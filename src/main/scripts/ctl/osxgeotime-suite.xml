@@ -225,9 +225,14 @@
           <ctl:with-param name="count" select="1"/>
           <ctl:with-param name="description" select="'Atom Feed'"/>
         </ctl:call-test>
+        <xsl:if test="$os.doc/response/content/atom:feed/os:totalResults &lt; count($os.doc/response/content/atom:feed/atom:entry)">
+          <ctl:message>[ERROR] Announced <xsl:value-of select="$os.doc/response/content/atom:feed/os:totalResults"/> total results (on os:totalResults) but returned <xsl:value-of select="count($os.doc/response/content/atom:feed/atom:entry)"/> atom:entry elements.
+          </ctl:message>
+          <ctl:fail/>
+        </xsl:if>
         <xsl:variable name="must.have.items">
           <xsl:choose>
-            <xsl:when test="expected.empty">0</xsl:when>
+            <xsl:when test="$expected.empty='true'">0</xsl:when>
             <xsl:when test="$query/token[@type='os:count']"><xsl:value-of select="$query/token[@type='os:count']"/></xsl:when>
             <xsl:otherwise/>
           </xsl:choose>
@@ -286,7 +291,6 @@
             </query>
             <query empty='true' status='200' description="a valid OpenSearch request that returns emtpy">
               <token type="geo:box">0,0,0,0</token>
-              <token type="os:count">1</token>
             </query>
           </xsl:variable>
           <xsl:for-each select="$queries/query">
@@ -296,7 +300,7 @@
               </ctl:with-param>
               <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
               <ctl:with-param name="expected.status" select="@status"/>
-              <ctl:with-param name="expected.empty" select="@empty='true'"/>
+              <ctl:with-param name="expected.empty" select="@empty"/>
               <ctl:with-param name="description" select="@description"/>
             </ctl:call-test>
           </xsl:for-each>

@@ -161,6 +161,20 @@
     </ctl:code>
   </ctl:test>
 
+  <ctl:test name="tns:total-results">
+    <ctl:param name="xpath"/>
+    <ctl:param name="count"/>
+    <ctl:param name="description"/>
+    <ctl:assertion>Expect maximum of {$count} result(s) ({$description})</ctl:assertion>
+    <ctl:code>
+      <xsl:variable name="cc" select="count($xpath)"/>
+      <xsl:if test="$cc &gt; $count">
+        <ctl:message>[ERROR] Maximum element(s) of <xsl:value-of select="$description"/> expected was <xsl:value-of select="$count"/> but found <xsl:value-of select="$cc"/>
+        </ctl:message>
+        <ctl:fail/>
+      </xsl:if>
+    </ctl:code>
+  </ctl:test>
 
   <ctl:test name="tns:validate-query-element">
     <ctl:param name="query"/>
@@ -225,11 +239,12 @@
           <ctl:with-param name="count" select="1"/>
           <ctl:with-param name="description" select="'Atom Feed'"/>
         </ctl:call-test>
-        <xsl:if test="$os.doc/response/content/atom:feed/os:totalResults &lt; count($os.doc/response/content/atom:feed/atom:entry)">
-          <ctl:message>[ERROR] Announced <xsl:value-of select="$os.doc/response/content/atom:feed/os:totalResults"/> total results (on os:totalResults) but returned <xsl:value-of select="count($os.doc/response/content/atom:feed/atom:entry)"/> atom:entry elements.
-          </ctl:message>
-          <ctl:fail/>
-        </xsl:if>
+        <xsl:variable name="totalResults" select="$os.doc/response/content/atom:feed/os:totalResults + 1 -1"/>
+        <ctl:call-test name="tns:total-results">
+          <ctl:with-param name="xpath" select="$os.doc/response/content/atom:entry"/>
+          <ctl:with-param name="count" select="$totalResults"/>
+          <ctl:with-param name="description" select="'atom:entry as announced by atom:feed/os:totalResults'"/>
+        </ctl:call-test>
         <xsl:variable name="must.have.items">
           <xsl:choose>
             <xsl:when test="$expected.empty='true'">0</xsl:when>
@@ -237,7 +252,7 @@
             <xsl:otherwise/>
           </xsl:choose>
         </xsl:variable>
-        <xsl:if test="$must.have.items">
+        <xsl:if test="$must.have.items!=''">
           <ctl:call-test name="tns:elements-count">
             <ctl:with-param name="xpath" select="$os.doc/response/content/atom:feed/atom:entry"/>
             <ctl:with-param name="count" select="$must.have.items"/>

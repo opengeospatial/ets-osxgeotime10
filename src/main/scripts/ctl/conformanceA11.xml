@@ -73,7 +73,6 @@
           <token type="time:start">1900-01-01</token>
           <token type="time:end">2100-01-01</token>
           <token type="time:relation">disjoint</token>
-          <token type="os:count">1</token>
         </query>
         </xsl:variable>
         <xsl:for-each select="$queries/query">

@@ -11,7 +11,6 @@ osDocument = element os:OpenSearchDescription { osDocumentConstruct }
 
 osDocumentConstruct =
      element os:ShortName { xsd:string { maxLength = "16" } }
-#CHANGE element os:ShortName { xsd:string { maxLength = "160" } }
       & element os:Description { xsd:string { maxLength = "1024" } }
       & element os:Url { osdUrlAttr } *
       & element os:Contact { xsd:string {pattern=".+@.+"}}?

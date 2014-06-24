@@ -59,7 +59,7 @@ public class VerifyConceptualModelTests {
         thrown.expectMessage("1 schema validation error(s) detected");
         RelaxNGTest iut = new RelaxNGTest();
         Document doc = docBuilder.parse(this.getClass().getResourceAsStream(
-                "/atomgeotime01_nogeorss_noauthor.xml"));
+                "/atom_noid.xml"));
         iut.setTestSubject(doc);
         iut.setRncFile("/org/opengis/cite/osxgeotime/schemas/atomgeo.rnc");
         iut.validateXMLfromRNC();

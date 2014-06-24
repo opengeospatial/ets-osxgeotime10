@@ -57,34 +57,43 @@
             </xsl:call-template>
         </xsl:variable>
 
-        <xsl:variable name="queries">
-          <query status='200' description="a valid OpenSearch request with relation intersects">
-            <token type="geo:box">-180,-90,180,90</token>
-            <token type="geo:relation">intersects</token>
-            <token type="os:count">1</token>
-          </query>
-          <query status='200' description="a valid OpenSearch request with relation contains">
-            <token type="geo:box">-180,-90,180,90</token>
-            <token type="geo:relation">contains</token>
-            <token type="os:count">1</token>
-          </query>
-          <query status='200' empty="true" description="a valid OpenSearch request with relation disjoint covering the entire globe (expecting an empty answer)">
-            <token type="geo:box" >-180,-90,180,90</token>
-            <token type="geo:relation">disjoint</token>
-            <token type="os:count">1</token>
-          </query>
-        </xsl:variable>
-        <xsl:for-each select="$queries/query">
-          <ctl:call-test name="tns:os-request">
-            <ctl:with-param name="url-tokens">
-              <value><xsl:copy-of select="$url-tokens"/></value>
-            </ctl:with-param>
-            <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
-            <ctl:with-param name="expected.status" select="@status"/>
-            <ctl:with-param name="expected.empty" select="@empty"/>
-            <ctl:with-param name="description" select="@description"/>
-          </ctl:call-test>
-        </xsl:for-each>
+        <xsl:choose>
+          <xsl:when test="not($url-tokens/*[@type='geo:box']) or not($url-tokens/*[@type='geo:relation'])">
+            <ctl:message>[ERROR] Subject does not accept the geo:box and geo:relation parameters. Skipping other tests
+            </ctl:message>
+            <ctl:fail/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:variable name="queries">
+              <query status='200' description="a valid OpenSearch request with relation intersects">
+                <token type="geo:box">-180,-90,180,90</token>
+                <token type="geo:relation">intersects</token>
+                <token type="os:count">1</token>
+              </query>
+              <query status='200' description="a valid OpenSearch request with relation contains">
+                <token type="geo:box">-180,-90,180,90</token>
+                <token type="geo:relation">contains</token>
+                <token type="os:count">1</token>
+              </query>
+              <query status='200' empty="true" description="a valid OpenSearch request with relation disjoint covering the entire globe (expecting an empty answer)">
+                <token type="geo:box" >-180,-90,180,90</token>
+                <token type="geo:relation">disjoint</token>
+                <token type="os:count">1</token>
+              </query>
+            </xsl:variable>
+            <xsl:for-each select="$queries/query">
+              <ctl:call-test name="tns:os-request">
+                <ctl:with-param name="url-tokens">
+                  <value><xsl:copy-of select="$url-tokens"/></value>
+                </ctl:with-param>
+                <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
+                <ctl:with-param name="expected.status" select="@status"/>
+                <ctl:with-param name="expected.empty" select="@empty"/>
+                <ctl:with-param name="description" select="@description"/>
+              </ctl:call-test>
+            </xsl:for-each>
+          </xsl:otherwise>
+        </xsl:choose>
       </xsl:otherwise>
     </xsl:choose>
   </ctl:code>

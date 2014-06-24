@@ -54,74 +54,81 @@
                 <xsl:with-param name="context" select="$os.description.doc/response/content/os:OpenSearchDescription"/>
             </xsl:call-template>
         </xsl:variable>
-        <xsl:variable name="queries">
-          <query status='200' type="a valid OpenSearch request covering the whole globe">
-            <token type="geo:box">-180,-90,180,90</token>
-          </query>
-          <query status='200' type="a valid OpenSearch request covering the east hemisphere ">
-            <token type="geo:box">0,-90,180,90</token>
-          </query>
-          <query status='200' type="a valid OpenSearch request covering the west hemisphere">
-            <token type="geo:box">-180,-90,0,90</token>
-          </query>
-          <query status='200' type="a valid OpenSearch covering a small bounding box">
-            <token type="geo:box">-10,-10,10,10</token>
-          </query>
-        </xsl:variable>
-        <xsl:for-each select="$queries/query">
-          <ctl:call-test name="tns:os-request">
-            <ctl:with-param name="url-tokens">
-              <value><xsl:copy-of select="$url-tokens"/></value>
-            </ctl:with-param>
-            <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
-            <ctl:with-param name="expected.status" select="@status"/>
-            <ctl:with-param name="expected.empty" select="@empty"/>
-            <ctl:with-param name="description" select="@type"/>
-
-          </ctl:call-test>
-        </xsl:for-each>
-
-
-        <xsl:variable name="totalResults">
-          <xsl:for-each select="$queries/query">
-            <count>
-              <xsl:variable name="os.doc">
-                <ctl:request>
-                  <ctl:url>
-                    <xsl:call-template name="instantiate-url-template">
-                      <xsl:with-param name="tokens" select="$url-tokens"/>
-                      <xsl:with-param name="request" select="."/>
-                    </xsl:call-template>
-                  </ctl:url>
-                  <ctl:method>GET</ctl:method>
-                  <parsers:HTTPParser/>
-                </ctl:request>
-              </xsl:variable>
-              <xsl:value-of select="$os.doc/response/content/atom:feed/os:totalResults"/>
-            </count>
-          </xsl:for-each>
-        </xsl:variable>
         <xsl:choose>
-          <xsl:when test="count($totalResults/*)!=count($queries/*)">
-            <ctl:message>[ERROR] Unable to perform test not the same number of responses. The server does not conforms to the Min Spatial Operator conformance class.
+          <xsl:when test="not($url-tokens/*[@type='geo:box'])">
+            <ctl:message>[ERROR] Subject does not accept the geo:box parameter. Skipping other tests
             </ctl:message>
             <ctl:fail/>
           </xsl:when>
-          <xsl:when test="$totalResults/count[1] &gt; ($totalResults/count[2] + $totalResults/count[3])">
-            <ctl:message>[ERROR] Global query returns more than sum of queries. The server does not conforms to the Min Spatial Operator conformance class.
-            </ctl:message>
-            <ctl:fail/>
-          </xsl:when>
-          <xsl:when test="$totalResults/count[1] &lt; ($totalResults/count[4])">
-            <ctl:message>[ERROR] Global query returns less than smaller bounding box query. The server does not conforms to the Min Spatial Operator conformance class.
-            </ctl:message>
-            <ctl:fail/>
-          </xsl:when>
-          <xsl:otherwise><ctl:message>[INFO] The server conforms to the Min Spatial Operator conformance class.
-          </ctl:message>
+          <xsl:otherwise>
+            <xsl:variable name="queries">
+              <query status='200' type="a valid OpenSearch request covering the whole globe">
+                <token type="geo:box">-180,-90,180,90</token>
+              </query>
+              <query status='200' type="a valid OpenSearch request covering the east hemisphere ">
+                <token type="geo:box">0,-90,180,90</token>
+              </query>
+              <query status='200' type="a valid OpenSearch request covering the west hemisphere">
+                <token type="geo:box">-180,-90,0,90</token>
+              </query>
+              <query status='200' type="a valid OpenSearch covering a small bounding box">
+                <token type="geo:box">-10,-10,10,10</token>
+              </query>
+            </xsl:variable>
+            <xsl:for-each select="$queries/query">
+              <ctl:call-test name="tns:os-request">
+                <ctl:with-param name="url-tokens">
+                  <value><xsl:copy-of select="$url-tokens"/></value>
+                </ctl:with-param>
+                <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
+                <ctl:with-param name="expected.status" select="@status"/>
+                <ctl:with-param name="expected.empty" select="@empty"/>
+                <ctl:with-param name="description" select="@type"/>
+
+              </ctl:call-test>
+            </xsl:for-each>
+
+            <xsl:variable name="totalResults">
+              <xsl:for-each select="$queries/query">
+                <count>
+                  <xsl:variable name="os.doc">
+                    <ctl:request>
+                      <ctl:url>
+                        <xsl:call-template name="instantiate-url-template">
+                          <xsl:with-param name="tokens" select="$url-tokens"/>
+                          <xsl:with-param name="request" select="."/>
+                        </xsl:call-template>
+                      </ctl:url>
+                      <ctl:method>GET</ctl:method>
+                      <parsers:HTTPParser/>
+                    </ctl:request>
+                  </xsl:variable>
+                  <xsl:value-of select="$os.doc/response/content/atom:feed/os:totalResults"/>
+                </count>
+              </xsl:for-each>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="count($totalResults/*)!=count($queries/*)">
+                <ctl:message>[ERROR] Unable to perform test not the same number of responses. The server does not conforms to the Min Spatial Operator conformance class.
+                </ctl:message>
+                <ctl:fail/>
+              </xsl:when>
+              <xsl:when test="$totalResults/count[1] &gt; ($totalResults/count[2] + $totalResults/count[3])">
+                <ctl:message>[ERROR] Global query returns more than sum of queries. The server does not conforms to the Min Spatial Operator conformance class.
+                </ctl:message>
+                <ctl:fail/>
+              </xsl:when>
+              <xsl:when test="$totalResults/count[1] &lt; ($totalResults/count[4])">
+                <ctl:message>[ERROR] Global query returns less than smaller bounding box query. The server does not conforms to the Min Spatial Operator conformance class.
+                </ctl:message>
+                <ctl:fail/>
+              </xsl:when>
+              <xsl:otherwise><ctl:message>[INFO] The server conforms to the Min Spatial Operator conformance class.
+              </ctl:message>
+              </xsl:otherwise>
+            </xsl:choose>
           </xsl:otherwise>
         </xsl:choose>
-
       </xsl:otherwise>
     </xsl:choose>
   </ctl:code>

@@ -53,26 +53,35 @@
                   <xsl:with-param name="string" select="$url"/>
               </xsl:call-template>
           </xsl:variable>
-          <xsl:variable name="queries">
-            <query status='200' description="a valid OpenSearch request with lat, lon and radius Geometry">
-              <token type="geo:lat">0</token>
-              <token type="geo:lon">0</token>
-              <token type="geo:radius">90</token>
-              <token type="os:count">1</token>
-            </query>
-          </xsl:variable>
+          <xsl:choose>
+            <xsl:when test="not($url-tokens/*[@type='geo:lat']) or not($url-tokens/*[@type='geo:lon']) or  not($url-tokens/*[@type='geo:radius']) ">
+              <ctl:message>[ERROR] Subject does not accept all the geo:lat, geo:lon and geo:radius parameter. Skipping other tests
+              </ctl:message>
+              <ctl:fail/>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:variable name="queries">
+                <query status='200' description="a valid OpenSearch request with lat, lon and radius Geometry">
+                  <token type="geo:lat">0</token>
+                  <token type="geo:lon">0</token>
+                  <token type="geo:radius">90</token>
+                  <token type="os:count">1</token>
+                </query>
+              </xsl:variable>
 
-          <xsl:for-each select="$queries/query">
-            <ctl:call-test name="tns:os-request">
-              <ctl:with-param name="url-tokens">
-                <value><xsl:copy-of select="$url-tokens"/></value>
-              </ctl:with-param>
-              <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
-              <ctl:with-param name="expected.status" select="@status"/>
-              <ctl:with-param name="expected.empty" select="@empty"/>
-              <ctl:with-param name="description" select="@description"/>
-            </ctl:call-test>
-          </xsl:for-each>
+              <xsl:for-each select="$queries/query">
+                <ctl:call-test name="tns:os-request">
+                  <ctl:with-param name="url-tokens">
+                    <value><xsl:copy-of select="$url-tokens"/></value>
+                  </ctl:with-param>
+                  <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
+                  <ctl:with-param name="expected.status" select="@status"/>
+                  <ctl:with-param name="expected.empty" select="@empty"/>
+                  <ctl:with-param name="description" select="@description"/>
+                </ctl:call-test>
+              </xsl:for-each>
+            </xsl:otherwise>
+          </xsl:choose>
         </xsl:otherwise>
       </xsl:choose>
     </ctl:code>

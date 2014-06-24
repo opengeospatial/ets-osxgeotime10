@@ -50,28 +50,37 @@
                 <xsl:with-param name="context" select="$os.description.doc/response/content/os:OpenSearchDescription"/>
             </xsl:call-template>
         </xsl:variable>
-        <xsl:variable name="queries">
-          <query status='200' description="a valid OpenSearch request for name='Paris'">
-            <token type="geo:name">Paris</token>
-          </query>
-          <query status='200' description="a valid OpenSearch request for name='Dublin'">
-            <token type="geo:name">Berlin</token>
-          </query>
-          <query status='200' emtpy='true' description="a valid OpenSearch request for an improbable name">
-            <token type="geo:name">hoc_autem_non_est_verum</token>
-          </query>
-        </xsl:variable>
-      <xsl:for-each select="$queries/query">
-        <ctl:call-test name="tns:os-request">
-          <ctl:with-param name="url-tokens">
-            <value><xsl:copy-of select="$url-tokens"/></value>
-          </ctl:with-param>
-          <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
-          <ctl:with-param name="expected.status" select="@status"/>
-          <ctl:with-param name="expected.empty" select="@empty"/>
-          <ctl:with-param name="description" select="@description"/>
-        </ctl:call-test>
-      </xsl:for-each>
+        <xsl:choose>
+          <xsl:when test="not($url-tokens/*[@type='geo:name'])">
+            <ctl:message>[ERROR] Subject does not accept the geo:name parameter. Skipping other tests
+            </ctl:message>
+            <ctl:fail/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:variable name="queries">
+              <query status='200' description="a valid OpenSearch request for name='Paris'">
+                <token type="geo:name">Paris</token>
+              </query>
+              <query status='200' description="a valid OpenSearch request for name='Dublin'">
+                <token type="geo:name">Berlin</token>
+              </query>
+              <query status='200' emtpy='true' description="a valid OpenSearch request for an improbable name">
+                <token type="geo:name">hoc_autem_non_est_verum</token>
+              </query>
+            </xsl:variable>
+            <xsl:for-each select="$queries/query">
+              <ctl:call-test name="tns:os-request">
+                <ctl:with-param name="url-tokens">
+                  <value><xsl:copy-of select="$url-tokens"/></value>
+                </ctl:with-param>
+                <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
+                <ctl:with-param name="expected.status" select="@status"/>
+                <ctl:with-param name="expected.empty" select="@empty"/>
+                <ctl:with-param name="description" select="@description"/>
+              </ctl:call-test>
+            </xsl:for-each>
+          </xsl:otherwise>
+        </xsl:choose>
       </xsl:otherwise>
     </xsl:choose>
   </ctl:code>

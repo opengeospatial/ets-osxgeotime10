@@ -50,42 +50,50 @@
                <xsl:with-param name="context" select="$os.description.doc/response/content/os:OpenSearchDescription"/>
            </xsl:call-template>
        </xsl:variable>
-       <xsl:variable name="queries">
-        <query status='200' description="a valid date/time OpenSearch using contains time:relation">
-          <token type="time:start">1900-01-01T00:00:00Z</token>
-          <token type="time:end">2100-01-01T00:00:00Z</token>
-          <token type="time:relation">contains</token>
-          <token type="os:count">1</token>
-        </query>
-        <query status='200' description="a valid date/time OpenSearch using intersects time:relation">
-          <token type="time:start">1900-01-01</token>
-          <token type="time:end">2100-01-01</token>
-          <token type="time:relation">intersects</token>
-          <token type="os:count">1</token>
-        </query>
-        <query status='200' description="a valid date/time OpenSearch using during time:relation">
-          <token type="time:start">1900-01-01</token>
-          <token type="time:end">2100-01-01</token>
-          <token type="time:relation">during</token>
-          <token type="os:count">1</token>
-        </query>
-        <query empty='true' status='200' description="a valid date/time OpenSearch using disjoint time:relation">
-          <token type="time:start">1900-01-01</token>
-          <token type="time:end">2100-01-01</token>
-          <token type="time:relation">disjoint</token>
-        </query>
-        </xsl:variable>
-        <xsl:for-each select="$queries/query">
-          <ctl:call-test name="tns:os-request">
-            <ctl:with-param name="url-tokens">
-              <value><xsl:copy-of select="$url-tokens"/></value>
-            </ctl:with-param>
-            <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
-            <ctl:with-param name="expected.status" select="@status"/>
-            <ctl:with-param name="expected.empty" select="@empty"/>
-            <ctl:with-param name="description" select="@description"/>
-          </ctl:call-test>
-        </xsl:for-each>
+       <xsl:choose>
+         <xsl:when test="not($url-tokens/*[@type='time:start']) or not($url-tokens/*[@type='time:end']) or not($url-tokens/*[@type='time:relation'])">
+           <ctl:message>[ERROR] Subject does not accept the time:start, time:end and time:relation. Skipping other tests           </ctl:message>
+           <ctl:fail/>
+         </xsl:when>
+         <xsl:otherwise>
+           <xsl:variable name="queries">
+            <query status='200' description="a valid date/time OpenSearch using contains time:relation">
+              <token type="time:start">1900-01-01T00:00:00Z</token>
+              <token type="time:end">2100-01-01T00:00:00Z</token>
+              <token type="time:relation">contains</token>
+              <token type="os:count">1</token>
+            </query>
+            <query status='200' description="a valid date/time OpenSearch using intersects time:relation">
+              <token type="time:start">1900-01-01</token>
+              <token type="time:end">2100-01-01</token>
+              <token type="time:relation">intersects</token>
+              <token type="os:count">1</token>
+            </query>
+            <query status='200' description="a valid date/time OpenSearch using during time:relation">
+              <token type="time:start">1900-01-01</token>
+              <token type="time:end">2100-01-01</token>
+              <token type="time:relation">during</token>
+              <token type="os:count">1</token>
+            </query>
+            <query empty='true' status='200' description="a valid date/time OpenSearch using disjoint time:relation">
+              <token type="time:start">1900-01-01</token>
+              <token type="time:end">2100-01-01</token>
+              <token type="time:relation">disjoint</token>
+            </query>
+            </xsl:variable>
+            <xsl:for-each select="$queries/query">
+              <ctl:call-test name="tns:os-request">
+                <ctl:with-param name="url-tokens">
+                  <value><xsl:copy-of select="$url-tokens"/></value>
+                </ctl:with-param>
+                <ctl:with-param name="query"><xsl:copy-of select="."/></ctl:with-param>
+                <ctl:with-param name="expected.status" select="@status"/>
+                <ctl:with-param name="expected.empty" select="@empty"/>
+                <ctl:with-param name="description" select="@description"/>
+              </ctl:call-test>
+            </xsl:for-each>
+          </xsl:otherwise>
+        </xsl:choose>
       </xsl:otherwise>
     </xsl:choose>
   </ctl:code>

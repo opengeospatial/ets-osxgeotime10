@@ -12,13 +12,11 @@ namespace s = "http://purl.oclc.org/dsdl/schematron"
 namespace local = ""
 
 # Redefine atom:feed to include new OGC10-032 elements
-# CHANGE atomFeedConstruct &= georssElement ? & element dc:identifier { xsd:token } ?
-atomFeedConstruct &= georssElement ? & element dc:identifier { xsd:token }
+atomFeedConstruct &= georssElement ? & element dc:identifier { xsd:token } ?
 
 
 # Redefine atom:entry to include new OGC10-032 elements
-# CHANGE atomEntryConstruct &= georssElement ? & element dc:identifier { xsd:token } ?
-atomEntryConstruct &= georssElement ? & element dc:identifier { xsd:token }
+atomEntryConstruct &= georssElement ? & element dc:identifier { xsd:token } ?
 
 include "geo.rnc"
 # relative path schemas/georss folder

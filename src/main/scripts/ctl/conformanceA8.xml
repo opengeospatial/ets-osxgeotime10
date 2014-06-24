@@ -67,21 +67,20 @@
 
             <!-- Get one ID from First ID -->
 
+            <xsl:variable name="os.url">
+              <xsl:call-template name="instantiate-url-template">
+                <xsl:with-param name="tokens" select="$url-tokens"/>
+                <xsl:with-param name="request">
+                  <token type="geo:box">-180,-90,180,90</token>
+                  <token type="os:count">1</token>
+                </xsl:with-param>
+              </xsl:call-template>
+            </xsl:variable>
+            <ctl:message>[LOG] <xsl:value-of select="$os.url"/>
+            </ctl:message>
             <xsl:variable name="os.doc">
               <ctl:request>
-                <ctl:url>
-                  <xsl:call-template name="instantiate-url-template">
-                    <xsl:with-param name="tokens" select="$url-tokens"/>
-                    <xsl:with-param name="request">
-                        <value>
-                          <query status='200' type="a valid OpenSearch request covering the entire globe">
-                            <token type="geo:box">-180,-90,180,90</token>
-                            <token type="os:count">1</token>
-                          </query>
-                        </value>
-                    </xsl:with-param>
-                  </xsl:call-template>
-                </ctl:url>
+                <ctl:url><xsl:value-of select="$os.url"/></ctl:url>
                 <ctl:method>GET</ctl:method>
                 <parsers:HTTPParser/>
               </ctl:request>
@@ -91,10 +90,10 @@
             <ctl:call-test name="tns:elements-count">
               <ctl:with-param name="xpath" select="$os.doc/response/content/atom:feed/atom:entry[1]/dc:identifier"/>
               <ctl:with-param name="count" select="1"/>
-              <ctl:with-param name="description" select="'Atom entries'"/>
+              <ctl:with-param name="description" select="'dc:identifier'"/>
             </ctl:call-test>
 
-            <xsl:variable name="node1" select="$os.doc/result/content[1]/atom:feed/atom:entry[1]"/>
+            <xsl:variable name="node1" select="$os.doc/response/content/atom:feed/atom:entry[1]"/>
             <xsl:variable name="MyID" select="$node1/dc:identifier"/>
             <xsl:choose>
               <xsl:when test="concat('',$MyID)=''">
@@ -110,7 +109,7 @@
                     <token type="os:count">1</token>
                   </query>
                   <query status='200' empty="true" type="a valid OpenSearch request with a non-existant ID (expects empty response)">
-                    <token type="geo:uid" returns="empty">hoc_autem_non_est_verum</token>
+                    <token type="geo:uid">hoc_autem_non_est_verum</token>
                     <token type="os:count">1</token>
                   </query>
                 </xsl:variable>
@@ -138,10 +137,12 @@
                     </xsl:variable>
                     <xsl:choose>
                       <xsl:when test="$atom.doc/response/status/@code != '200'">
-                        <test-failure>Server reported a <xsl:value-of select="$atom.doc/response/status/@code"/> response code (<xsl:value-of select="$atom.doc/response/status"/>)</test-failure>
+                        <ctl:message>[ERROR]Server reported a <xsl:value-of select="$atom.doc/response/status/@code"/> response code (<xsl:value-of select="$atom.doc/response/status"/>)</ctl:message>
+                        <ctl:fail/>
                       </xsl:when>
                       <xsl:when test="not($atom.doc/response/content/atom:feed)">
-                        <test-failure>URL did not obtain an Atom document!</test-failure>
+                        <ctl:message>[ERROR] URL did not obtain an Atom document!</ctl:message>
+                        <ctl:fail/>
                       </xsl:when>
                       <xsl:otherwise>
                         <content><xsl:copy-of select="$atom.doc/response/content/atom:feed"/></content>
@@ -154,38 +155,27 @@
 
                 <xsl:choose>
                   <xsl:when test="count($all-results/result/content[*])!=count($queries/*)">
-                    <ctl:call-function name="tns:write-test-messages">
-                      <ctl:with-param name="messages" select="$all-results"/>
-                    </ctl:call-function>
                     <ctl:message>[ERROR] Unable to perform requests. The server does not conforms to ID query class.
                     </ctl:message>
                     <ctl:fail/>
                   </xsl:when>
                   <xsl:when test="$node2/dc:identifier != $MyID">
-                    <ctl:call-function name="tns:write-test-messages">
-                      <ctl:with-param name="messages" select="$all-results"/>
-                    </ctl:call-function>
                     <ctl:message>[ERROR] The entry returned by ID query is not the same requested.
                     </ctl:message>
                     <ctl:fail/>
                   </xsl:when>
-                  <xsl:when test="count($node1 | $node2) != count($node1) or count($node1 | $node2) != count($node2)">
-                    <ctl:call-function name="tns:write-test-messages">
-                      <ctl:with-param name="messages" select="$all-results"/>
-                    </ctl:call-function>
-                    <ctl:message>[ERROR] The entry returned by ID query does not returns the same number of elements
+                  <xsl:when test="count($node1/*) != count($node2/*)">
+                    <ctl:message>[ERROR] The entry returned by ID (<xsl:value-of select="$MyID"/> and <xsl:value-of select="$node2/dc:identifier"/>) query does not returns the same number of elements (<xsl:value-of select="count($node1/*)"/> vs <xsl:value-of select="count($node2/*)"/> )
                     </ctl:message>
                     <ctl:fail/>
                   </xsl:when>
-                  <xsl:when test="deep-equal($node1, $node2)">
-                    <ctl:call-function name="tns:write-test-messages">
-                      <ctl:with-param name="messages" select="$all-results"/>
-                    </ctl:call-function>
+                  <!-- function not working correctly
+                    <xsl:when test="deep-equal($node1/*, $node2/*)">
                     <ctl:message>[ERROR] The entry returned by ID query does not returns the same content
                     </ctl:message>
                     <ctl:fail/>
                   </xsl:when>
-
+                  -->
                   <xsl:otherwise>
                     <ctl:message>[SUCCESS] Test subject supports Get Record By ID Conformance class
                     </ctl:message>

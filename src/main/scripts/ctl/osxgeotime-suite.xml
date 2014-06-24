@@ -190,14 +190,16 @@
   <ctl:test name="tns:validate-query-element">
     <ctl:param name="query"/>
     <ctl:param name="doc"/>
-    <ctl:assertion>Test Atom response for the request os:Query elements</ctl:assertion>
+    <ctl:assertion>Test Atom response os:Query elements must consider requested parameters</ctl:assertion>
     <ctl:code>
       <xsl:for-each select="$query/token">
-        <ctl:call-test name="tns:elements-count">
-          <ctl:with-param name="xpath" select="$doc/response/content/atom:feed/os:Query/@*[name=current()/@type]"/>
-          <ctl:with-param name="count" select="1"/>
-          <ctl:with-param name="description" select="concat('atom:feed/osQuery/@',@type)"/>
-        </ctl:call-test>
+        <ctl:message>[LOG] Checking presence of atom:feed/os:Query/@<xsl:value-of select="@type"/>
+        </ctl:message>
+        <xsl:if test="not($doc/content/atom:feed/os:Query[@role='request']/@*[name()=current()/@type or concat('os:',local-name()) = current()/@type])">
+          <ctl:message>[ERROR] Missing the attribute @<xsl:value-of select="@type"/> in atom:feed/os:Query that was part of the request
+          </ctl:message>
+          <ctl:fail/>
+        </xsl:if>
       </xsl:for-each>
     </ctl:code>
   </ctl:test>

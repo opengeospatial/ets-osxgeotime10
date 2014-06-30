@@ -1,14 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.opengis.cite</groupId>
   <artifactId>ets-osxgeotime</artifactId>
-  <version>1.0-r1</version>
+  <version>0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>OpenSearch Geo and Time Extensions Conformance Test Suite</name>
   <description>
-  Checks OGC Geo and Time documents 10-032.
+  Conformance Test Suite for OpenSearch OGC Geo and Time extensions (OGC 10-032).
   </description>
   <licenses>
     <license>
@@ -42,8 +43,30 @@
     <ets-code>osxgeotime</ets-code>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
+    <maven.deploy.skip>true</maven.deploy.skip>
+    	<github.global.server>github</github.global.server>
+      <github.site.repositoryName>osxgeotime</github.site.repositoryName>
+      <github.site.repositoryOwner>opengeospatial</github.site.repositoryOwner>
   </properties>
 
+  <pluginRepositories>
+  		<pluginRepository>
+  			<snapshots />
+  			<id>repository.terradue.com</id>
+  			<name>repository.terradue.com-releases</name>
+  			<url>http://repository.terradue.com/artifactory/libs-release-public</url>
+  		</pluginRepository>
+	</pluginRepositories>
+  <repositories>
+    <repository>
+      <id>opengeospatial-cite</id>
+      <name>OGC CITE Repository</name>
+      <url>https://svn.opengeospatial.org/ogc-projects/cite/maven</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+	</repositories>
   <dependencies>
     <dependency>
       <groupId>org.opengis.cite.teamengine</groupId>
@@ -166,6 +189,44 @@
           <tagNameFormat>@{project.version}</tagNameFormat>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>de.jutzig</groupId>
+        <artifactId>github-release-plugin</artifactId>
+        <version>1.0.3</version>
+        <executions>
+          <execution>
+            <id>github-upload-deps</id>
+            <phase>deploy</phase>
+            <goals>
+              <goal>release</goal>
+            </goals>
+            <inherited>false</inherited>
+            <configuration>
+              <releaseName>v${project.version}</releaseName>
+              <tag>v${project.version}</tag>
+              <artifact>${project.build.directory}/ets-osxgeotime-${project.version}-deps.zip</artifact>
+              <overwriteArtifact>true</overwriteArtifact>
+            </configuration>
+          </execution>
+          <execution>
+            <id>github-upload-ctl</id>
+            <phase>deploy</phase>
+            <goals>
+              <goal>release</goal>
+            </goals>
+            <inherited>false</inherited>
+            <configuration>
+              <releaseName>v${project.version}</releaseName>
+              <tag>v${project.version}</tag>
+              <artifact>${project.build.directory}/ets-osxgeotime-${project.version}-ctl-scripts.zip</artifact>
+              <overwriteArtifact>true</overwriteArtifact>
+            </configuration>
+          </execution>
+
+        </executions>
+      </plugin>
+
     </plugins>
     <resources>
       <resource>
@@ -180,15 +241,5 @@
     </resources>
   </build>
 
-  <repositories>
-    <repository>
-      <!-- Allows public read-only access -->
-      <id>opengeospatial-cite</id>
-      <name>OGC CITE Repository</name>
-      <url>https://svn.opengeospatial.org/ogc-projects/cite/maven</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
+
 </project>

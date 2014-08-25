@@ -51,6 +51,7 @@
           <xsl:variable name="url-tokens">
               <xsl:call-template name="tokenize-url-template">
                   <xsl:with-param name="string" select="$url"/>
+                  <xsl:with-param name="context" select="$os.description.doc/content/os:OpenSearchDescription"/>
               </xsl:call-template>
           </xsl:variable>
           <xsl:choose>

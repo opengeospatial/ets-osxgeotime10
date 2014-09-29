@@ -164,14 +164,19 @@
   <ctl:test name="tns:total-results">
     <ctl:param name="xpath"/>
     <ctl:param name="count"/>
+    <ctl:param name="oscount"/>
     <ctl:param name="description"/>
     <ctl:param name="expected.empty"/>
     <ctl:assertion>Test total results ({$count}) and expection of empty results ({$expected.empty})</ctl:assertion>
     <ctl:code>
       <xsl:variable name="cc" select="count($xpath)"/>
       <xsl:if test="$expected.empty='true' and $count &gt; 0">
-        <ctl:message>[ERROR] Request expected empty but os:totalResults announce <xsl:value-of select="$count"/> having <xsl:value-of select="$count"/> results
+        <ctl:message>[ERROR] Request expected empty but os:totalResults announce <xsl:value-of select="$count"/>
         </ctl:message>
+        <xsl:if test="$cc &gt; $count and $oscount='0'">
+          <ctl:message>[WARNING] Check if os:count=0 is not being used to return all results
+          </ctl:message>
+        </xsl:if>
         <ctl:fail/>
       </xsl:if>
       <xsl:if test="$expected.empty='true' and $cc &gt; 0">
@@ -256,6 +261,7 @@
         <ctl:call-test name="tns:total-results">
           <ctl:with-param name="xpath" select="$os.doc/response/content/atom:entry"/>
           <ctl:with-param name="count" select="$totalResults"/>
+          <ctl:with-param name="oscount" select="$query/token[@type='os:count']"/>
           <ctl:with-param name="expected.empty" select="$expected.empty"/>
           <ctl:with-param name="description" select="'atom:entry as announced by atom:feed/os:totalResults'"/>
         </ctl:call-test>

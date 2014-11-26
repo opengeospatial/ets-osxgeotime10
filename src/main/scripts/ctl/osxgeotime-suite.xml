@@ -464,6 +464,17 @@
         (absolute http: or file: URI)</h4>
     </label>
     <input id="uri" name="uri" size="96" type="text" value="" />
+
+        This test will execute the Core Classe, select below the additional Conformance Classes:<br/>
+    <input name="conformance" type="checkbox" value="geometry" > Arbitrary Geometry Search </input><br/>
+    <input name="conformance" type="checkbox" value="pointradius" > Point and Radius Search </input><br/>
+    <input name="conformance" type="checkbox" value="minspatial" > Minimum spatial operator </input><br/>
+    <input name="conformance" type="checkbox" value="spatialops" > Spatial operators </input><br/>
+    <input name="conformance" type="checkbox" value="byid" > Get record by id </input><br/>
+    <input name="conformance" type="checkbox" value="searchbyname" > Search by name </input><br/>
+    <input name="conformance" type="checkbox" value="timesearch" > Temporal search core </input><br/>
+    <input name="conformance" type="checkbox" value="timerelation" > Temporal search relation </input><br/>
+
   </p>
 </fieldset>
 <p>
@@ -477,33 +488,52 @@
       <!-- Populate global variables from form data -->
       <xsl:variable name="os.description.url"
                       select="$form-data/values/value[@key='uri']"/>
+
+      <xsl:variable name="conformance"><xsl:copy-of select="$form-data/values/value[@key='conformance']"/></xsl:variable>
+
       <ctl:call-test name="tns:Core">
         <ctl:with-param name="os.description.url" select="$os.description.url"/>
       </ctl:call-test>
+      <xsl:if test="contains($conformance,'geometry')">
       <ctl:call-test name="tns:ConformanceA4">
         <ctl:with-param name="os.description.url" select="$os.description.url"/>
       </ctl:call-test>
+      </xsl:if>
+      <xsl:if test="contains($conformance,'pointradius')">
       <ctl:call-test name="tns:ConformanceA5">
         <ctl:with-param name="os.description.url" select="$os.description.url"/>
       </ctl:call-test>
+      </xsl:if>
+      <xsl:if test="contains($conformance,'minspatial')">
       <ctl:call-test name="tns:ConformanceA6">
         <ctl:with-param name="os.description.url" select="$os.description.url"/>
       </ctl:call-test>
+      </xsl:if>
+      <xsl:if test="contains($conformance,'spatialops')">
       <ctl:call-test name="tns:ConformanceA7">
         <ctl:with-param name="os.description.url" select="$os.description.url"/>
       </ctl:call-test>
+      </xsl:if>
+      <xsl:if test="contains($conformance,'byid')">
       <ctl:call-test name="tns:ConformanceA8">
         <ctl:with-param name="os.description.url" select="$os.description.url"/>
       </ctl:call-test>
+      </xsl:if>
+      <xsl:if test="contains($conformance,'searchbyname')">
       <ctl:call-test name="tns:ConformanceA9">
         <ctl:with-param name="os.description.url" select="$os.description.url"/>
       </ctl:call-test>
+      </xsl:if>
+      <xsl:if test="contains($conformance,'timesearch')">
       <ctl:call-test name="tns:ConformanceA10">
         <ctl:with-param name="os.description.url" select="$os.description.url"/>
       </ctl:call-test>
+      </xsl:if>
+      <xsl:if test="contains($conformance,'timerelation')">
       <ctl:call-test name="tns:ConformanceA11">
         <ctl:with-param name="os.description.url" select="$os.description.url"/>
       </ctl:call-test>
+      </xsl:if>
     </ctl:code>
   </ctl:test>
 

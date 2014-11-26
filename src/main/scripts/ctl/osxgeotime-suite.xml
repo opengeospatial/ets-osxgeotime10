@@ -455,9 +455,7 @@
 </div>
 
 <fieldset style="background:#ccffff">
-  <legend style="font-family: sans-serif; color: #000099;
-       background-color:#F0F8FF; border-style: solid;
-       border-width: medium; padding:4px">Implementation under test</legend>
+  
   <p>
     <label class="form-label" for="uri">
       <h4 style="margin-bottom: 0.5em">Location of OpenSearch Description document
